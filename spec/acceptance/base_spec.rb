@@ -17,5 +17,9 @@ describe 'iptables class' do
       expect(apply_manifest(pp).exit_code).to eq(0)
     end
 
+    describe service($servicename) do
+      it { should be_enabled }
+    end
+
   end
 end
