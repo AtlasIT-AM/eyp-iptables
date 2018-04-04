@@ -1,0 +1,6 @@
+# <%= @description %>
+<% @protocols.each do |protocol| -%>
+-A <%= @chain -%> -p <%= protocol -%>
+<% if defined?(@dport) %> --dport <%= @dport %><% elsif defined?(@dport_range) %> --match multiport --dports <%= @dport_range %><% end -%>
+ -j <%= @target %>
+<% end %>
