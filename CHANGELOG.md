@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.1.20
+
+* bugfix: service notification with firewalld class enabled
+
+## 0.1.19
+
+* added stateful firewall options
+
 ## 0.1.18
 
 * bugfix: integration with eyp-firewalld using **::eyp_firewalld_status**

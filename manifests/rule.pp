@@ -11,6 +11,7 @@ define iptables::rule (
                         $source_addr              = undef,
                         $inverse_source_addr      = false,
                         $destination_addr         = undef,
+                        $states                   = [],
                         $inverse_destination_addr = false,
                       ) {
   include ::iptables
@@ -55,6 +56,5 @@ define iptables::rule (
     order   => "10-${chain}-${order}",
     content => template("${module_name}/rule.erb"),
   }
-
 
 }
