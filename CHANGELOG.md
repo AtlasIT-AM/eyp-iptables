@@ -1,9 +1,14 @@
 # CHANGELOG
 
+## 0.1.18
+
+* bugfix: integration with eyp-firewalld using **::eyp_firewalld_status**
+
 ## 0.1.17
 
-* added support to add rules to the persistent rules
+* added support to add rules to the persistent rules files
 * added IPv6 support
+* removed rspec testing
 
 ## 0.1.16
 

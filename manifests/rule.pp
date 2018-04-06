@@ -1,13 +1,17 @@
 define iptables::rule (
-                        $description = $name,
-                        $chain       = 'INPUT',
-                        $target      = 'REJECT',
-                        $protocols   = [ 'tcp', 'udp' ],
-                        $dport       = undef,
-                        $order       = '42',
-                        $persistent  = true,
-                        $ip_version  = '4',
-                        $dport_range = undef,
+                        $description              = $name,
+                        $chain                    = 'INPUT',
+                        $target                   = 'REJECT',
+                        $protocols                = [ 'tcp', 'udp' ],
+                        $dport                    = undef,
+                        $order                    = '42',
+                        $persistent               = true,
+                        $ip_version               = '4',
+                        $dport_range              = undef,
+                        $source_addr              = undef,
+                        $inverse_source_addr      = false,
+                        $destination_addr         = undef,
+                        $inverse_destination_addr = false,
                       ) {
   include ::iptables
 
@@ -46,7 +50,7 @@ define iptables::rule (
     }
   }
 
-  concat::fragment { "iptables (${persistent}) rule ${order} ${chain} ${protocols} ${dport} ${target}":
+  concat::fragment { "iptables (${persistent}) rule ${order} ${chain} ${protocols} ${dport} ${target} ${inverse_source_addr} ${source_addr} ${inverse_destination_addr} ${destination_addr}":
     target  => $target_file,
     order   => "10-${chain}-${order}",
     content => template("${module_name}/rule.erb"),
