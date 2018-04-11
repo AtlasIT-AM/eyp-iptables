@@ -82,6 +82,15 @@ iptables::rule { 'inverse dst test':
   inverse_source_addr => true,
   target              => 'ACCEPT',
 }
+
+iptables::rule { 'reject not local tcp/23':
+  protocols         => [ 'tcp' ],
+  dport             => '23',
+  target            => 'REJECT',
+  interface         => 'lo',
+  inverse_interface => true,
+  reject_with       => icmp-port-unreachable,
+}
 ```
 
 ruleset created:
@@ -110,6 +119,9 @@ ruleset created:
 
 # Allow tcp/22
 -A INPUT -p tcp --dport 22 -j ACCEPT
+
+# reject not local tcp/23
+-A INPUT ! -i lo -p tcp --dport 23 -j REJECT --reject-with icmp-port-unreachable
 
 COMMIT
 ```
