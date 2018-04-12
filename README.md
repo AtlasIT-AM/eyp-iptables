@@ -15,13 +15,15 @@
 
 ## Overview
 
-iptables basic management
+iptables management
 
 ## Module Description
 
 This module is intended to manage IPv4 and IPv6 iptables rules
 
-To be able to manage logrotate files it needs **eyp-logrotate**
+To be able to manage logrotate files it needs **eyp-logrotate** module installed. If you do not want to install **eyp-logrotate**, please set **iptables::manage_logrotate** to false
+
+For **SLES11SP3** it just disables iptables, ruleset management is not supported
 
 ## Setup
 
@@ -41,7 +43,7 @@ Manages:
 
 ### Setup Requirements
 
-This module requires pluginsync enabled
+This module requires pluginsync enabled for puppet < 4
 
 ### Beginning with iptables
 
@@ -93,7 +95,7 @@ iptables::rule { 'reject not local tcp/23':
 }
 ```
 
-ruleset created:
+created ruleset:
 
 ```
 # puppet managed file
@@ -130,16 +132,16 @@ COMMIT
 
 ### iptables
 
-* **ensure**: (default: running)
-* **enable**: (default: true)
-* **manage_docker_service**: (default: false)
-* **manage_service**: (default: true)
-* **manage_logrotate**: add logrotate config file (default: true)
-* **logrotate_rotate**: '4',
-* **logrotate_compress**: true,
-* **logrotate_missingok**: true,
-* **logrotate_notifempty**: true,
-* **logrotate_frequency**: 'weekly',
+* **ensure**: Service status (default: running)
+* **enable**: Whether or not iptables service is enabled at boot (default: true)
+* **manage_docker_service**: Whether o not to start iptables server inside a docker container (default: false)
+* **manage_service**: Whether or not the service is managed (default: true)
+* **manage_logrotate**: Add logrotate config file (default: true)
+* **logrotate_frequency**: Rotation frequency (default: weekly)
+* **logrotate_rotate**: How many rorations to keep (default: 4)
+* **logrotate_compress**: Whether o not to compress logs once rotated (default: true)
+* **logrotate_missingok**: Whether or not it is ok if the log file is missing (true)
+* **logrotate_notifempty**: Whether or not to rotate an empty file (true)
 * **default_input**:  default target for INPUT chain (default: ACCEPT)
 * **default_forward**: default target for FORWARD chain (default: ACCEPT)
 * **default_output**: default target for OUTPUT chain (default: ACCEPT)
@@ -152,14 +154,16 @@ COMMIT
 * **protocols**: list of protocols (default: 'tcp', 'udp')
 * **dport**: destination port (default: undef)
 * **order**: rule order (default: 42)
-* **persistent**: is this rule persistent (default: true)
 * **ip_version**: IP version (default: 4)
 * **dport_range**: destination port range (default: undef)
 * **source_addr**: source address (default: undef)
 * **inverse_source_addr**: use inverse match for source address (default: false)
 * **destination_addr**: destination address (default: undef)
 * **inverse_destination_addr**: use inverse match for destination address (default: false)
+* **interface**: interface (default: undef)
+* **inverse_interface**: use inverse match for interface (default: false)
 * **states**: Array, stateful firewall states (default: [])
+* **reject_with**: If target is set to REJECT, this option modifies REJECT behaviour to send a specific ICMP message back to the source host (default: undef)
 
 ## Limitations
 
@@ -178,7 +182,7 @@ have tests to check both presence and absence of any feature
 
 ### Contributing
 
-1. Fork it
+1. Fork it using the development fork: [jordiprats/eyp-systemd](https://github.com/jordiprats/eyp-systemd)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Added some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
