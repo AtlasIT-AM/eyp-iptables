@@ -23,7 +23,7 @@ This module is intended to manage IPv4 and IPv6 iptables rules
 
 To be able to manage logrotate files it needs **eyp-logrotate** module installed. If you do not want to install **eyp-logrotate**, please set **iptables::manage_logrotate** to false
 
-For **SLES11SP3** it just disables iptables, ruleset management is not supported
+For **SLES11SP3** it just disables iptables, ruleset management is not currently supported.
 
 ## Setup
 
@@ -58,15 +58,31 @@ class { 'iptables':
   manage_logrotate => false,
 }
 
+iptables::chain { 'DEMO':
+  description => 'demo chain',
+}
+
+iptables::rule { 'fist process the demo chain':
+  order => '01',
+  target => 'DEMO',
+}
+
+iptables::rule { 'Allow udp/53 and tcp/53':
+  chain  => 'DEMO',
+  dport  => '53',
+  target => 'ACCEPT',
+}
+
 iptables::rule { 'Allow tcp/22':
+  chain     => 'DEMO',
   protocols => [ 'tcp' ],
   dport     => '22',
   target    => 'ACCEPT',
 }
 
-iptables::rule { 'Allow udp/53 and tcp/53':
-  dport  => '53',
-  target => 'ACCEPT',
+iptables::rule { 'count tcp/21':
+  protocols => [ 'tcp' ],
+  dport     => '21',
 }
 
 iptables::rule { 'multiport test':
@@ -86,12 +102,12 @@ iptables::rule { 'inverse dst test':
 }
 
 iptables::rule { 'reject not local tcp/23':
-  protocols         => [ 'tcp' ],
-  dport             => '23',
-  target            => 'REJECT',
-  interface         => 'lo',
-  inverse_interface => true,
-  reject_with       => icmp-port-unreachable,
+  protocols            => [ 'tcp' ],
+  dport                => '23',
+  target               => 'REJECT',
+  in_interface         => 'lo',
+  inverse_in_interface => true,
+  reject_with          => icmp-port-unreachable,
 }
 ```
 
@@ -103,6 +119,19 @@ created ruleset:
 :INPUT ACCEPT [0:0]
 :FORWARD ACCEPT [0:0]
 :OUTPUT ACCEPT [0:0]
+# demo chain
+:DEMO - [0:0]
+# Allow udp/53 and tcp/53
+-A DEMO -p tcp --dport 53 -j ACCEPT
+-A DEMO -p udp --dport 53 -j ACCEPT
+
+# Allow tcp/22
+-A DEMO -p tcp --dport 22 -j ACCEPT
+
+# fist process the demo chain
+-A INPUT -p tcp -j DEMO
+-A INPUT -p udp -j DEMO
+
 # multiport test
 -A INPUT -p tcp --match multiport --dports 9300:9400 -j ACCEPT
 -A INPUT -p udp --match multiport --dports 9300:9400 -j ACCEPT
@@ -115,17 +144,43 @@ created ruleset:
 -A INPUT -p tcp ! -s 1.0.0.1 -j ACCEPT
 -A INPUT -p udp ! -s 1.0.0.1 -j ACCEPT
 
-# Allow udp/53 and tcp/53
--A INPUT -p tcp --dport 53 -j ACCEPT
--A INPUT -p udp --dport 53 -j ACCEPT
-
-# Allow tcp/22
--A INPUT -p tcp --dport 22 -j ACCEPT
+# count tcp/21
+-A INPUT -p tcp --dport 21
 
 # reject not local tcp/23
 -A INPUT ! -i lo -p tcp --dport 23 -j REJECT --reject-with icmp-port-unreachable
 
 COMMIT
+```
+
+Applied rules:
+
+```
+[root@demo ~]# iptables -L -nv
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+   82  4248 DEMO       tcp  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    4   448 DEMO       udp  --  *      *       0.0.0.0/0            0.0.0.0/0           
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            multiport dports 9300:9400
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            0.0.0.0/0            multiport dports 9300:9400
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            1.1.1.1             
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            1.1.1.1             
+    0     0 ACCEPT     tcp  --  *      *      !1.0.0.1              0.0.0.0/0           
+    4   448 ACCEPT     udp  --  *      *      !1.0.0.1              0.0.0.0/0           
+    0     0            tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:21
+    0     0 REJECT     tcp  --  !lo    *       0.0.0.0/0            0.0.0.0/0            tcp dpt:23 reject-with icmp-port-unreachable
+
+Chain FORWARD (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain OUTPUT (policy ACCEPT 52 packets, 4408 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+
+Chain DEMO (2 references)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:53
+    0     0 ACCEPT     udp  --  *      *       0.0.0.0/0            0.0.0.0/0            udp dpt:53
+   82  4248 ACCEPT     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22
 ```
 
 ## Reference
@@ -148,9 +203,10 @@ COMMIT
 
 ### iptables::rule
 
+* **target**: target for rule - Either **target** or **goto** must be defined (default: undef)
+* **goto**: This  specifies  that the processing should continue in a user specified chain. Unlike the **target** option return will not continue processing in this chain but instead in the chain that called us via **target**- Either **target** or **goto** must be defined (default: undef)
 * **description**: rule description (default: resource name)
 * **chain**: chain to insert the rule to (default: INPUT)
-* **target**: target for rule (default: REJECT)
 * **protocols**: list of protocols (default: 'tcp', 'udp')
 * **dport**: destination port (default: undef)
 * **order**: rule order (default: 42)
@@ -160,10 +216,18 @@ COMMIT
 * **inverse_source_addr**: use inverse match for source address (default: false)
 * **destination_addr**: destination address (default: undef)
 * **inverse_destination_addr**: use inverse match for destination address (default: false)
-* **interface**: interface (default: undef)
-* **inverse_interface**: use inverse match for interface (default: false)
+* **in_interface**: filter packets for incoming interface (default: undef)
+* **inverse_in_interface**: use inverse match for in interface (default: false)
+* **out_interface**: filter packets for outgoing interface (default: undef)
+* **inverse_out_interface**: use inverse match for out interface (default: false)
 * **states**: Array, stateful firewall states (default: [])
 * **reject_with**: If target is set to REJECT, this option modifies REJECT behaviour to send a specific ICMP message back to the source host (default: undef)
+
+### iptables::chain
+* **chain_name**: chain to create (default: resource's name)
+* **order**: chain creation order (default: 42)
+* **description**: chain description (default: undef)
+* **ip_version**:  IP version (default: 4)
 
 ## Limitations
 

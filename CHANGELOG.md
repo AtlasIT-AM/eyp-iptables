@@ -1,8 +1,13 @@
 # CHANGELOG
 
-## 0.1.22
+## 0.2.0
 
+* **INCOMPATIBLE CHANGES**:
+  - **iptables::rule**: renamed **interface** to **in_interface** and **inverse_interface** to **inverse_in_interface**
+  - **iptables::rule**: changed default target to undef
+* added **out_interface** and **inverse_out_interface**
 * check the presence of ::logrotate if **manage_logrotate** is set to true
+* added the ability to create chains via **iptables::chain**
 
 ## 0.1.21
 

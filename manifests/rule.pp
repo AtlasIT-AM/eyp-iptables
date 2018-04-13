@@ -3,7 +3,8 @@ define iptables::rule (
                         $order                    = '42',
                         $ip_version               = '4',
                         $chain                    = 'INPUT',
-                        $target                   = 'REJECT',
+                        $target                   = undef,
+                        $goto                     = undef,
                         $reject_with              = undef,
                         $protocols                = [ 'tcp', 'udp' ],
                         $dport                    = undef,
@@ -12,8 +13,10 @@ define iptables::rule (
                         $inverse_source_addr      = false,
                         $destination_addr         = undef,
                         $inverse_destination_addr = false,
-                        $interface                = undef,
-                        $inverse_interface        = false,
+                        $in_interface              = undef,
+                        $inverse_in_interface     = false,
+                        $out_interface              = undef,
+                        $inverse_out_interface     = false,
                         $states                   = [],
                       ) {
   include ::iptables
@@ -48,7 +51,7 @@ define iptables::rule (
     }
   }
 
-  concat::fragment { "iptables rule IPv${ip_version} - ${order} ${chain} ${inverse_interface} ${interface} ${protocols} ${dport} ${target} ${inverse_source_addr} ${source_addr} ${inverse_destination_addr} ${destination_addr} ${states}":
+  concat::fragment { "iptables rule IPv${ip_version} - ${order} ${chain} ${inverse_in_interface} ${in_interface} ${inverse_out_interface} ${out_interface} ${protocols} ${dport} ${target} ${inverse_source_addr} ${source_addr} ${inverse_destination_addr} ${destination_addr} ${states}":
     target  => $target_file,
     order   => "10-${chain}-${order}",
     content => template("${module_name}/rule.erb"),
