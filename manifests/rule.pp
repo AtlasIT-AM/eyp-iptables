@@ -15,10 +15,10 @@ define iptables::rule (
                         $inverse_source_addr      = false,
                         $destination_addr         = undef,
                         $inverse_destination_addr = false,
-                        $in_interface              = undef,
+                        $in_interface             = undef,
                         $inverse_in_interface     = false,
-                        $out_interface              = undef,
-                        $inverse_out_interface     = false,
+                        $out_interface            = undef,
+                        $inverse_out_interface    = false,
                         $states                   = [],
                       ) {
   include ::iptables
